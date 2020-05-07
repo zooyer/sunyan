@@ -227,6 +227,40 @@ func unmarshalVertical(rows [][]string, x, y, height int) jsons.Object {
 	return obj
 }
 
+// 解析宽度为n的键值对，过滤掉中间的空白字段
+/*
+------------------
+- key1 -  - val1 -
+------------------
+- key2 -  - val2 -
+------------------
+- key3 -  - val3 -
+------------------
+- key4 -  - val4 -
+------------------
+- key5 -  - val5 -
+------------------
+ */
+func unmarshalMultiVertical(rows [][]string, x, y, width, height int) jsons.Object {
+	var obj = make(jsons.Object)
+
+	for i := 0; i < height; i++ {
+		if row := rows[y+i][x : x+width]; len(row) > 1 {
+			var slice []string
+			for _, r := range row {
+				if !isSpace(r) {
+					slice = append(slice, r)
+				}
+			}
+			if len(slice) > 1 {
+				obj[slice[0]] = slice[1]
+			}
+		}
+	}
+
+	return obj
+}
+
 func main() {
 	dirs, err := ioutil.ReadDir("./")
 	if err != nil {
@@ -304,8 +338,7 @@ func main() {
 				page["治炼温度参数"] = table
 
 				// 电能消耗
-				_, table = unmarshalTableVertical(rows, 7, 26, 7, 4)
-				page["电能消耗"] = table
+				page["电能消耗"] = unmarshalMultiVertical(rows, 7, 26, 7, 4)
 
 				// 成分调整时间
 				_, table = unmarshalTableVertical(rows, 14, 14, 6, 16)
